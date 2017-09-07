@@ -1,0 +1,91 @@
+一、awk
+1.分割
+1） 单分隔符
+   awk -F ',' '{print $1}' filename             #逗号作为分割，输出第一列内容
+2） 多个字符作为分割符
+   awk -F ',,' '{print $1}' filename            #,,作为分割符
+3）多个分割选项（使用正则匹配）
+   awk -F ',|:' '{print $1"\t"$3}' filename     #,或者;都可以当作分割符,输出第一列\t第3列
+4）分割出来多少列
+    awk -F ',' '{print NF}' filename            # NF表示 col num
+5）按字段去重
+	awk -F ',' '!a[$3]++' filename              #,作为分隔符，按第三列去重
+6）删除某列
+    awk '{$1="";print $0}'  file                #删除第一列，不改变原文件
+zcat 20170809.online_urs.zip |awk -F ' ' '{print $2}'|wc -l
+二、
+1. 输出匹配模式的行
+   grep 'hello' filename                       #找到所有含有‘hello‘的行
+   grep -n pattern filename                    #同时显示行号
+   grep -c pattern filename                    #匹配的总行数
+   grep -o pattern filename                    #只匹配 正则找到的内容，而不是一整行
+2. 显示不匹配的行
+   grep -v pattern filename  
+3. 使用Perl 正则表达式
+   grep默认的正则不支持\d这类，所以使用-P命令
+	grep -P "urs=[\w\d]+@[\w\.]*cc\.163\.com"
+
+三、sed
+1. 替换
+1）sed 's/,,/:/g' filename                       # 将,,匹配替换为 :   /g表示替换一行所有匹配
+2) sed -i                                        #原地替换
+http://www.theunixschool.com/2012/06/sed-25-examples-to-delete-line-or.html sed 25种方法
+3) sed  -i '1i Employee, EmpId'  empFile          #第一行添加数据
+4) sed -i 's/^/"/g' tt 每行开始添加 "               
+四、cat
+合并文件
+cat file1 file2 > mergefile
+cat 2016* > mergefile                             #路径下所有文件名匹配2016的文件合并
+
+6) 删除指定行：
+	   sed -i '3d'     filename                 #删除第三行（-i表示直接在文件上修改）
+	   sed -e '3d'     filename                 # -e是将删除后的结果输出，源文件并没有修改
+	   sed -i '3d;5d'  filename                 #删除第3行和第5行
+	   sed -i '3,5d'   filename                 #删除3～5行
+	   sed -i '3,$d'   filename                 #删除第三行之后所有行
+	7) 列出指定行
+	   sed -n '3,5p'   filename                 #列出3～5行 
+       sed -n '3p;5p'  filename                 #列出3、5行
+	7) 保存匹配模式的行
+		grep pattern filename > newfile
+	   保存不匹配的行
+	    grep -v pattern filename > newfile
+
+五、不匹配
+grep -P '^[^{]*'  
+
+六、sort 
+sort -n -3 -t ',' file > file.sort                  #按照,分割，按第三列排序，-t只支持单分隔符 (-n是以数值排序)
+
+七、查看进程
+ps -aux | grep username                             #查看username所有的进程
+kill -s 9 pid                                       #-s是强制杀死
+
+十、压缩文件常用处理
+tar -czvf xx.tar xx                        #将xx打包压缩为xx.tar.gz
+tar zxvf xx.tar                            #将xx.tar解压
+gzip filename                              #将file打包压缩为.gz文件，删除源文件
+gunzip  –c filename.gz  > filename         #解压保留原文件
+gunzip filename.gz                         #解压并删除压缩文件
+zip -r t.zip t1 t2                         #将t1,t2压缩成t.zip，保留原始文件，windows下可以直接解压
+7z a t.zip t1 t2                           #7z同样可以打包
+7z x tt.zip                                #解压tt.zip到当前文件夹
+7z x -o/data1/cc                           #解压到/data1/cc路径下
+
+匹配，用zgrep
+head显示， zcat file.gz | head
+添加一行 head -1 xx.file | gzip -c >> myfile       #添加的内容先压缩再添加
+
+十二、显示文件大小
+ls -lh filename           #以K,M,G为单位
+
+十三、find
+find path -name 'filename*'    
+
+十四、rename
+rename 2016 zhanqi_2016 2016*        #批量重命名以2016开头的文件为zhanqi_2016开头
+
+
+
+
+
