@@ -1,0 +1,168 @@
+#模板交终端视频语音用户月数据
+new_urs_change.get_huoyue_niming_urs.py
+
+#DM数据平台整改
+ #4_31,4_32中client_type=0是android，1是ios，2是ipad
+
+#获取两个时间内的所有日期
+def getDays(date_begain,date_end):  
+    date_format="%Y%m%d";  
+    bd=datetime.datetime.strptime(date_begain,date_format)
+    ed=datetime.datetime.strptime(date_end,date_format)
+    oneday=datetime.timedelta(days=1)  
+    count=0
+    while bd!=ed:  
+        ed=ed-oneday  
+        count+=1
+    li=[]  
+    for i in range(0,count+1):   
+        li.append(str(bd.date()).replace('-',''))  
+        bd=bd+oneday  
+    return li  
+
+''' 获取当前日期的一周内日期'''
+def getSevenDays(date_str):  
+    date_format="%Y%m%d";  
+    bd=datetime.datetime.strptime(date_str,date_format)
+    sevenDay=datetime.timedelta(days=6)   
+    ed = bd+sevenDay
+#    ed=datetime.datetime.strptime(bd+sevenDay,date_format)
+    oneday=datetime.timedelta(days=1)  
+    count=0
+    while bd!=ed:  
+        ed=ed-oneday  
+        count+=1
+    li=[]  
+    for i in range(0,count+1):   
+        li.append(str(bd.date()).replace('-',''))  
+        bd=bd+oneday  
+    return li  
+
+#获取任何一个月中的每个日期
+def get_month_datelist(year,month):
+    day_list =  range(calendar.monthrange(year, month)[1]+1)[1:]
+    if month<10:
+        month = '0'+str(month)
+    else:
+        month = str(month)
+    date_list = []
+    for day in day_list:
+
+        if day <10:
+            date = str(year)+month+'0'+str(day)
+        else:
+            date = str(year)+month+str(day)
+        date_list.append(date)
+    return date_list
+
+#平台读日志
+def read_data(date_str,log_id):
+    try:
+        path_g1 = '/data3/data/logs/%s/%s.log' % (log_id,date_str)
+        data_12_g1 = pd.read_table(path_g1,header = None)
+    except:
+        path_g1 = '/data3/data/logs/%s/%s.log.gz' % (log_id,date_str)
+        data_12_g1 = pd.read_table(path_g1,header = None)
+    return data_12_g1
+
+#本地读日志
+def read_data(date_str,log_id):
+    try:
+        path_g1 = 'Y:/%s/%s.log' % (str(log_id),date_str)
+        data_12_g1 = pd.read_table(path_g1,header = None)
+    except:
+        path_g1 = 'Y:/%s/%s.log.gz' % (str(log_id),date_str)
+        data_12_g1 = pd.read_table(path_g1,header = None)
+    return data_12_g1
+#平台明细
+import calendar
+def get_all_month_urs(year,month,terminal,template):
+    temp = []
+    room = 'all'
+    day_list =  range(calendar.monthrange(year, month)[1]+1)[1:]
+#    dict_urs = {}
+    if month<10:
+        month = '0'+str(month)
+    else:
+        month = str(month)
+    for day in day_list:
+
+        if day <10:
+            date = str(year)+month+'0'+str(day)
+        else:
+            date = str(year)+month+str(day)
+            
+        if room=='all' and terminal=='all' and template!='all'  : #全终端不同模板
+            file_route = r'/data1/cc_dmsystem_data/download_list/%s/%s.online_urs.zip' %(template,date)
+        if room=='all' and template=='all'  and terminal!='all': #全版本不同终端
+            file_route = r'/data1/cc_dmsystem_data/download_list/%s/%s.online_urs.zip' %(terminal,date)
+        if room=='all' and template!='all'  and terminal!='all': #不同终端与模板
+            file_route = r'/data1/cc_dmsystem_data/download_list/all_%s_%s/%s.online_urs.zip' %(template,terminal,date)
+        if room=='all' and template=='all'  and terminal=='all':#全终端全模板
+            file_route = r'/data1/cc_dmsystem_data/download_list/%s/%s.online_urs.zip' %('all',date)
+        if room!='all' and template=='all'  and terminal=='all':
+            file_route = r'/data1/cc_dmsystem_data/download_list/%s/%s.online_urs.zip' %(room,date)
+
+        z = zipfile.ZipFile(file_route, "r")
+        login_urs = get_data(z)
+#解析平台文件
+def get_data(z):
+#    z = zipfile.ZipFile(path+'20170501.online_urs.zip', "r")
+    content = z.read( z.namelist()[0] )    #读取zip文件中的第一个文件
+    content_list = content.split("\n")
+#print content_list[0]                  #行首列名输出
+    res=content_list[1:]
+    data = map(split_model,res)
+    
+    today_urs = []
+    for u_list in data:
+        if (u_list[-1] == '2'):
+            today_urs.append(u_list[2])
+            
+    login_urs = list(set(today_urs))
+    try:
+        login_urs.remove('-2')
+    except:
+        pass
+    return login_urs
+
+终端这么来定？
+def look_client(client_type):
+    '''根据端口匹配登录终端'''
+    try:
+        client_type = int(client_type)
+    except Exception, e:
+        print e
+    terminal = ''
+    client = ''
+    if client_type in (200, 1001, 1002, 1003, 1004, 1005):  # 移动端
+        terminal = 'mobile'
+        if client_type in (1001, 1003):
+            client = 'android'
+        elif client_type in (1002, 1004):
+            client = 'iphone'
+        elif client_type == 1005:
+            client = 'ipad'
+        else:
+            client = 'other'
+    elif  client_type==0 or (client_type>=100 and client_type<=150 and  client_type!=120 ) :
+        terminal = 'pc'
+    else:
+        terminal = 'web'
+        if client_type in (4000, 4133):
+            client = 'webcc'
+        elif client_type == 4103:
+            client = 'wap'
+        else:
+            client = 'other'
+    return terminal, client
+
+#dict与json
+dict存成json：
+    json_dict = json.dumps(dict_urs)
+    with open('%s.json'%(room),'w') as f:
+        f.write(json_dict)
+读json为dict:
+    with open('%s.json'%(room),'r') as json_file:
+        dict_room = json.load(json_file)
+
